@@ -8,7 +8,6 @@
 
 #define Py_BUILD_CORE
 #include <Python-2.6.4/Include/Python.h>
-#pragma comment(lib, "../Debug/wot_pyforward.lib")  // FIXME
 
 // import sys; sys.stdout = open('CONOUT$', 'wt'); print "lol"
 DWORD WINAPI MainThread(LPVOID handle)
@@ -16,23 +15,40 @@ DWORD WINAPI MainThread(LPVOID handle)
   Sleep(1000);
   HMODULE self = static_cast<HMODULE>(handle);
   Console::Open();
-  printf("Hello world!\n");
+  printf("py4wot 0.1 loaded!\n\n");
 
   //std::string cmd = "print(\"Hello from Python!\")";
-  std::string cmd = "import sys; sys.stdout = open(\"CONOUT$\", \"wt\")";
-  while (!cmd.empty())
+  PyRun_SimpleStringFlags("import sys; sys.stdout = open(\"CONOUT$\", \"wt\")", 0);
+  std::string cmd, batch;
+  while (batch.compare("unload"))
   {
-    //printf("Executing >%s<\n", cmd.c_str())
+    batch = "", cmd = "";
+    printf(">>> ");
+    do
+    {
+      std::getline(std::cin, cmd);
+      if (!batch.empty() && !cmd.empty())
+        batch.append("\n");
+      if (!cmd.empty())
+      {
+        batch.append(cmd);
+        printf("... ");
+      }
+    }
+    while (!cmd.empty());
+
     PyGILState_STATE gstate = PyGILState_Ensure();
-    printf("Result = %d\n", PyRun_SimpleStringFlags(cmd.c_str(), 0));
+    //printf("Executing >%s<\n", batch.c_str());
+    //printf("Result = %d\n", PyRun_SimpleStringFlags(batch.c_str(), 0));
+    int ret = PyRun_SimpleStringFlags(batch.c_str(), 0);
+    if (ret == -1)
+      printf("Error.\n");
     PyRun_SimpleStringFlags("sys.stdout.flush()", 0);
     PyGILState_Release(gstate);
     fflush(stdout);
     fflush(stdin);
     fflush(stderr);
-    std::getline(std::cin, cmd);
   }
-
   printf("Unloading in 2s...\n");
   Sleep(2000);
   Console::Close();

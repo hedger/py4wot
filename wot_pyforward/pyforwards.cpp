@@ -1,7 +1,7 @@
 #include "stdafx.h"
 
 #define Py_BUILD_CORE
-#include <Python.h>
+#include <Python-2.6.4/Include/Python.h>
 #include <cassert>
 
 #include "..\pytest\Tools.h"

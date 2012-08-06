@@ -1,0 +1,5 @@
+def list(package):
+  dct = package.__dict__
+  for k in dct.keys():
+    if repr(dct.get(k, "")).find("built") == -1:
+      print( "%s -> %s" % ( k, dct.get(k, "none") ))
