@@ -9,16 +9,32 @@
 #define Py_BUILD_CORE
 #include <Python-2.6.4/Include/Python.h>
 
+bool RunPython(const std::string& code)
+{
+  PyGILState_STATE gstate = PyGILState_Ensure();
+  //printf("Executing >%s<\n", code.c_str());
+  int ret = PyRun_SimpleStringFlags(code.c_str(), 0);
+  PyRun_SimpleStringFlags("sys.stdout.flush()", 0);
+  PyGILState_Release(gstate);
+  //fflush(stdout);
+  //fflush(stdin);
+  //fflush(stderr);
+  return (ret != -1);
+}
+
 // import sys; sys.stdout = open('CONOUT$', 'wt'); print "lol"
 DWORD WINAPI MainThread(LPVOID handle)
 {
   Sleep(1000);
   HMODULE self = static_cast<HMODULE>(handle);
   Console::Open();
-  printf("py4wot 0.1 loaded!\n\n");
+  printf("py4wot 0.1 loaded!\n"
+    "Type unload when done\n\n");
 
   //std::string cmd = "print(\"Hello from Python!\")";
-  PyRun_SimpleStringFlags("import sys; sys.stdout = open(\"CONOUT$\", \"wt\")", 0);
+  RunPython("logger = open(\"CONOUT$\", \"wt\"); import sys; "
+    "old_out = sys.stdout; old_err = sys.stderr;"
+    "sys.stdout = logger; sys.stderr = logger");
   std::string cmd, batch;
   while (batch.compare("unload"))
   {
@@ -37,20 +53,12 @@ DWORD WINAPI MainThread(LPVOID handle)
     }
     while (!cmd.empty());
 
-    PyGILState_STATE gstate = PyGILState_Ensure();
-    //printf("Executing >%s<\n", batch.c_str());
-    //printf("Result = %d\n", PyRun_SimpleStringFlags(batch.c_str(), 0));
-    int ret = PyRun_SimpleStringFlags(batch.c_str(), 0);
-    if (ret == -1)
+    if (!RunPython(batch))
       printf("Error.\n");
-    PyRun_SimpleStringFlags("sys.stdout.flush()", 0);
-    PyGILState_Release(gstate);
-    fflush(stdout);
-    fflush(stdin);
-    fflush(stderr);
   }
-  printf("Unloading in 2s...\n");
-  Sleep(2000);
+  RunPython("logger.close(); sys.stdout = old_out; sys.stderr = old_err");
+  printf("Unloading..."); // in 2s...\n");
+  Sleep(500);
   Console::Close();
   Tools::UnloadDLL(self);
   return 0;
