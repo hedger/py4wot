@@ -5,6 +5,7 @@
 #include "SelfInject.h"
 #include <iostream>
 #include <string>
+#include <algorithm>
 
 #define Py_BUILD_CORE
 #include <Python-2.6.4/Include/Python.h>
@@ -12,17 +13,23 @@
 bool RunPython(const std::string& code)
 {
   PyGILState_STATE gstate = PyGILState_Ensure();
-  //printf("Executing >%s<\n", code.c_str());
   int ret = PyRun_SimpleStringFlags(code.c_str(), 0);
   PyRun_SimpleStringFlags("sys.stdout.flush()", 0);
   PyGILState_Release(gstate);
-  //fflush(stdout);
-  //fflush(stdin);
-  //fflush(stderr);
   return (ret != -1);
 }
 
-// import sys; sys.stdout = open('CONOUT$', 'wt'); print "lol"
+bool active = true;
+DWORD WINAPI ConFlusher(LPVOID)
+{
+  while(active)
+  {
+    RunPython("");
+    Sleep(50);
+  }
+  return 0;  
+}
+
 DWORD WINAPI MainThread(LPVOID handle)
 {
   Sleep(1000);
@@ -31,10 +38,22 @@ DWORD WINAPI MainThread(LPVOID handle)
   printf("py4wot 0.1 loaded!\n"
     "Type unload when done\n\n");
 
-  //std::string cmd = "print(\"Hello from Python!\")";
-  RunPython("logger = open(\"CONOUT$\", \"wt\"); import sys; "
+  char modPath[255];
+  size_t len = Tools::GetModulePath(static_cast<HINSTANCE>(handle), modPath, 255);
+  std::replace(modPath, modPath+len+1, '\\', '/');
+  std::string scriptPath(modPath);
+  scriptPath.append("scripts/");
+  printf("Script path: %s\n", scriptPath.c_str());
+
+  RunPython("logger = open(\"CONOUT$\", \"wt\"); import sys, os; "
     "old_out = sys.stdout; old_err = sys.stderr;"
     "sys.stdout = logger; sys.stderr = logger");
+  RunPython(std::string("sys.path.append(\"") + scriptPath + "\")");
+  RunPython(std::string("os.chdir(\"") + scriptPath + "\")");
+  RunPython(std::string("def run(f):\n  execfile(\"%s/%s\" % (\"") + scriptPath + "\", f), globals(), globals())");
+  RunPython("run(\"autoexec.py\")");
+
+  CreateThread(NULL, NULL, &ConFlusher, NULL, NULL, NULL);
   std::string cmd, batch;
   while (batch.compare("unload"))
   {
@@ -48,6 +67,8 @@ DWORD WINAPI MainThread(LPVOID handle)
       if (!cmd.empty())
       {
         batch.append(cmd);
+        //if (GetAsyncKeyState(VK_CONTROL) & 0x8000 == 0)
+        //  break;
         printf("... ");
       }
     }
@@ -57,7 +78,9 @@ DWORD WINAPI MainThread(LPVOID handle)
       printf("Error.\n");
   }
   RunPython("logger.close(); sys.stdout = old_out; sys.stderr = old_err");
+  RunPython("sys.path.pop()");
   printf("Unloading..."); // in 2s...\n");
+  active = false;
   Sleep(500);
   Console::Close();
   Tools::UnloadDLL(self);

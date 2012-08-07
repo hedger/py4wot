@@ -1,29 +1,24 @@
-/* [APB:Reloaded] Hack by Hedger & h0pk1ns */
-
-#pragma once
-
 #include "stdafx.h"
 #include "Tools.h"
+#include <Tlhelp32.h>
 
 namespace Tools
 {
-  std::wstring ModuleDir;
-  WCHAR FilePath[MAX_PATH]; // File (Config) Path
-
-  /// Get File Path (Module Dir)
-  const wchar_t* GetFilePath(HINSTANCE hInstance, const WCHAR* Ext)
+  DWORD GetModulePath( HINSTANCE hInst, char* pszBuffer, DWORD dwSize )
   {
-    WCHAR ModulePath[MAX_PATH];
-    GetModuleFileNameW(hInstance, ModulePath, sizeof(ModulePath));
+    DWORD dwLength = GetModuleFileNameA( hInst, pszBuffer, dwSize );
+    if( dwLength )
+    {
+      while( dwLength && pszBuffer[ dwLength ] != '\\' )
+      {
+        dwLength--;
+      }
 
-    wcscpy(FilePath, ModulePath);
-    ModuleDir = std::wstring(ModulePath);
-    ModuleDir.resize(ModuleDir.rfind(L"\\"));
-
-    wcscpy(&FilePath[wcslen(FilePath) - 3], Ext);
-
-    return FilePath;
-  } 
+      if( dwLength )
+        pszBuffer[ dwLength + 1 ] = '\0';
+    }
+    return dwLength;
+  }
 
   void UnloadDLL(HMODULE hModule)
   {
@@ -34,23 +29,6 @@ namespace Tools
       push hModule
       push ExitThreadAddress
       jmp dword ptr [FreeLibrary]
-    }
-  }
-
-  void DebugLog(FILE* File, const char *Msg, ...)
-  {
-    if (File != NULL)
-    {
-      va_list va_alist;
-      char logbuf[256];
-      memset(logbuf, 0, 256);
-
-      va_start(va_alist, Msg);
-      _vsnprintf(logbuf + strlen(logbuf), sizeof(logbuf) - strlen(logbuf), Msg, va_alist);
-      va_end(va_alist);
-
-      fprintf(File, "%s", logbuf);
-      fflush(File);
     }
   }
 
