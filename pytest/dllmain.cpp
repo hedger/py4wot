@@ -49,7 +49,7 @@ DWORD WINAPI MainThread(LPVOID handle)
     "old_out = sys.stdout; old_err = sys.stderr;"
     "sys.stdout = logger; sys.stderr = logger");
   RunPython(std::string("sys.path.append(\"") + scriptPath + "\")");
-  RunPython(std::string("os.chdir(\"") + scriptPath + "\")");
+  //RunPython(std::string("os.chdir(\"") + scriptPath + "\")");
   RunPython(std::string("def run(f):\n  execfile(\"%s/%s\" % (\"") + scriptPath + "\", f), globals(), globals())");
   RunPython("run(\"autoexec.py\")");
 

@@ -4,32 +4,34 @@ import Math
 def GetVeh(vehID):
   return BigWorld.entities.get(vehID, None)
 
-class TurretInfo:
-  position = ()
+class GunInfo:
+  position = (0, 0, 0)
   model = None
   yaw = pitch = roll = 0
   
   def __init__(self, model):
+    if not model:
+      return
     self.model = model
     mat = Math.Matrix(model.matrix)
     self.position = model.position
     self.yaw, self.pitch, self.roll = mat.yaw, mat.pitch, mat.roll
     
   def __repr__(self):
-    return "<Turret %s @ %f %f %f>" % (self.position, self.yaw, self.pitch, self.roll)
+    return "<Gun %s @ %f %f %f>" % (self.position, self.yaw, self.pitch, self.roll)
     
   @staticmethod
   def GetForVehicle(vehID):
     veh = GetVeh(vehID)
     if veh is None:
       return None
-    turret = veh.appearance.modelsDesc["turret"]["model"]
-    return TurretInfo(turret) 
+    gun = veh.appearance.modelsDesc["gun"]["model"]
+    return GunInfo(gun) 
     
 class TankInfo:
   isValid = False
   isEnemy = True
-  turret = None
+  gun = None
   info = {}
   
   def __init__(self, vehID):
@@ -37,8 +39,8 @@ class TankInfo:
     if self.info is None:
       return
     
-    self.turret = TurretInfo.GetForVehicle(vehID)
-    self.isValid = self.turret is not None
+    self.gun = GunInfo.GetForVehicle(vehID)
+    self.isValid = self.gun is not None
     
   def __repr__(self):
     return "<TankInfo for %s (valid: %s)>" % (self.info.get("name", "Alex"), self.isValid)    
