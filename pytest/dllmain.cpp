@@ -66,9 +66,10 @@ DWORD WINAPI MainThread(LPVOID handle)
         batch.append("\n");
       if (!cmd.empty())
       {
+        bool firstLine = batch.empty();
         batch.append(cmd);
-        //if (GetAsyncKeyState(VK_CONTROL) & 0x8000 == 0)
-        //  break;
+        if ((firstLine) && ((GetAsyncKeyState(VK_SHIFT) & 0x8000) == 0))
+          break;
         printf("... ");
       }
     }
