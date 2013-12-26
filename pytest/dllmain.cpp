@@ -35,7 +35,8 @@ DWORD WINAPI MainThread(LPVOID handle)
   Sleep(1000);
   HMODULE self = static_cast<HMODULE>(handle);
   Console::Open();
-  printf("py4wot 0.1 loaded!\n"
+  printf("py4wowp 0.1 loaded!\n"
+    "(c) 2013 hedger\n"
     "Type unload when done\n\n");
 
   char modPath[255];

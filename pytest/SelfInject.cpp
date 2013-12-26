@@ -23,7 +23,7 @@ bool IsRunFromRunDll()
 extern "C" __declspec (dllexport) 
   void __cdecl Inject(HWND hwnd, HINSTANCE hinst, LPTSTR lpCmdLine, int nCmdShow)
 {
-  if (!SelfInject("WorldOfTanks.exe"))
+  if (!SelfInject("WorldOfWarplanes.exe"))
     MessageBox(0, L"Failed to inject!", L"...", 32);
 };
 
